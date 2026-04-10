@@ -124,7 +124,7 @@
         
         <div id="category-screen">
             <h2 style="margin-bottom: 5px;">أقسام الأسئلة</h2>
-            <p id="cat-desc" style="color: #aaa; font-size: 0.9rem; margin-top: 0;">اختار الأقسام اللي حابب تلعب بيها من الشيت</p>
+            <p id="cat-desc" style="color: #aaa; font-size: 0.9rem; margin-top: 0;">اختار "معلومات عامة" عشان تسحب الـ 100 ألف سؤال بتوعك</p>
             <div class="categories-grid" id="categories-container"></div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn" style="background-color: #555; flex: 1;" onclick="goBackToSetup()">⬅️ رجوع</button>
@@ -136,11 +136,6 @@
             <div class="scoreboard" id="scoreboard"></div>
             <div class="top-bar">
                 <div class="turn-box" id="turn-display">🎤 الدور على: ...</div>
-                <select id="game-difficulty" class="lang-switch" onchange="skipQuestion()">
-                    <option value="easy">سهل 🟢</option>
-                    <option value="medium">متوسط 🟡</option>
-                    <option value="hard">صعب 🔴</option>
-                </select>
             </div>
             <div class="question-text" id="question-text">جاري تحميل السؤال...</div>
             <div class="answer-box">
@@ -176,7 +171,6 @@
     </footer>
 
     <script>
-        // الأقسام بقت عبارة عن شكل واسم بس عشان الداتا كلها هتيجي من الشيت
         const unifiedCategories = {
             "معلومات عامة": { icon: "🧠" },
             "أفلام وسينما": { icon: "🎬" },
@@ -274,14 +268,16 @@
                 headers.forEach((h, index) => {
                     obj[h] = row[index] ? row[index].trim() : '';
                 });
+                
+                // التعديل السحري عشان الشيت بتاعك يقرا الـ q و a ويعتبرهم معلومات عامة
                 result.push({
-                    category: obj.category,
-                    q: obj.question,
-                    a: obj.answer,
-                    difficulty: obj.difficulty || 'easy'
+                    category: obj.category || "معلومات عامة", 
+                    q: obj.q || obj.question || '', 
+                    a: obj.a || obj.answer || ''
                 });
             }
-            return result;
+            // بنفلتر أي صفوف فاضية عشان ميجيبش أسئلة بيضاء
+            return result.filter(item => item.q !== '' && item.a !== '');
         }
 
         function shuffleArray(array) {
@@ -373,7 +369,6 @@
             
             arabicQuestions = [];
             
-            // سحب الداتا من الشيت بتاعك بس
             const sheetId = '1vfBCNoVy0ON4Cy3fOl33g3qHCxYMOdMRysACYP-PISU';
             const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
 
@@ -435,18 +430,18 @@
         function loadNextQuestion() {
             window.speechSynthesis.cancel(); 
             let activePool = arabicQuestions;
-            let selectedDiff = document.getElementById("game-difficulty").value;
             let currentQ = null;
 
-            let questionIndex = activePool.findIndex(q => q.difficulty === selectedDiff && !askedQuestions.has(q.q));
+            // شيلت فلتر الصعوبة عشان مكنش موجود في الشيت وبيعمل المشكلة
+            let questionIndex = activePool.findIndex(q => !askedQuestions.has(q.q));
 
             if (questionIndex !== -1) {
                 currentQ = activePool.splice(questionIndex, 1)[0];
                 askedQuestions.add(currentQ.q);
                 localStorage.setItem('amara17_askedQuestions', JSON.stringify([...askedQuestions]));
             } else {
-                showToast(`أسئلة المستوى (${selectedDiff === 'easy' ? 'السهل' : selectedDiff === 'medium' ? 'المتوسط' : 'الصعب'}) خلصت! 🔄`);
-                document.getElementById("question-text").innerText = `خلصنا كل الأسئلة الـ ${selectedDiff === 'easy' ? 'السهل' : selectedDiff === 'medium' ? 'المتوسط' : 'الصعب'}! اختار مستوى تاني من فوق أو ارجع ضيف أسئلة في الشيت.`;
+                showToast(`الأسئلة خلصت! 🔄`);
+                document.getElementById("question-text").innerText = `خلصنا كل الأسئلة! ارجع ضيف أسئلة في الشيت.`;
                 document.getElementById("answer-text").innerHTML = "...";
                 return; 
             }
