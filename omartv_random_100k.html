@@ -1,0 +1,735 @@
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديات عمارة 17 - النسخة المصرية</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+        body {
+            background-color: #121026;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #1a1835;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            border: 1px solid #2a2752;
+            text-align: center;
+            position: relative;
+        }
+        h1, h2 { color: #f9a826; }
+        #setup-screen, #category-screen, #game-screen, #winner-screen { display: none; }
+        #setup-screen.active, #category-screen.active, #game-screen.active, #winner-screen.active { display: block; }
+        .input-group { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
+        input[type="text"], select {
+            flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 1rem;
+            background-color: #2a2752; color: white; outline: none;
+        }
+        .btn {
+            background-color: #e94560; color: white; border: none; padding: 12px 20px;
+            font-size: 1.1rem; font-weight: bold; border-radius: 10px; cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover { background-color: #d83a56; transform: scale(1.05); }
+        .btn-full { width: 100%; margin-top: 15px; background-color: #f9a826; color: #121026; }
+        .btn-full:hover { background-color: #e69515; }
+        .players-list { list-style: none; padding: 0; margin: 15px 0; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .player-badge { background-color: #2a2752; padding: 8px 15px; border-radius: 20px; font-weight: bold; }
+        .categories-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px; margin-top: 20px; max-height: 60vh; overflow-y: auto; padding-right: 5px;
+        }
+        .cat-card {
+            background-color: #2a2752; border-radius: 15px; padding: 20px 10px;
+            cursor: pointer; transition: 0.3s; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; border: 3px solid transparent;
+        }
+        .cat-card:hover { transform: translateY(-5px); background-color: #353163; }
+        .cat-card.selected {
+            border-color: #4caf50; background-color: #1f3b2b; 
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); transform: scale(1.03);
+        }
+        .cat-icon { font-size: 3rem; margin-bottom: 10px; }
+        .cat-title { font-size: 1rem; font-weight: bold; color: #ddd; text-align: center; }
+        .scoreboard {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+            background-color: #2a2752; padding: 15px; border-radius: 10px; margin-bottom: 20px;
+        }
+        .score-card { background-color: #121026; padding: 10px; border-radius: 8px; min-width: 80px; font-weight: bold; border: 1px solid transparent; }
+        .active-player-card { border-color: #4caf50; background-color: #1e2a38; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .turn-box { background-color: #f9a826; color: #121026; padding: 10px 20px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; flex: 1; text-align: center; min-width: 100%; }
+        .lang-switch { background-color: #2a2752; color: white; border: 1px solid #f9a826; padding: 10px; border-radius: 8px; outline: none; font-weight: bold; cursor: pointer; flex: 1; }
+        .question-text { font-size: 1.4rem; margin-bottom: 15px; line-height: 1.5; transition: 0.3s; }
+        .answer-box {
+            background-color: #1e2a38; padding: 15px; margin-bottom: 25px; border-radius: 5px;
+            font-size: 1.2rem; color: #4caf50; font-weight: bold; transition: 0.3s;
+        }
+        .judge-controls { display: flex; gap: 15px; margin-bottom: 10px; }
+        .btn-correct { background-color: #4caf50; flex: 1; padding: 15px; font-size: 1.2rem; border-radius: 10px; }
+        .btn-wrong { background-color: #f44336; flex: 1; padding: 15px; font-size: 1.2rem; border-radius: 10px;}
+        .btn-translate { background-color: #3b82f6; width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 10px; color: white; margin-bottom: 10px; transition: 0.3s; }
+        .btn-translate:hover { background-color: #2563eb; }
+        .btn-translate:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .btn-skip { background-color: #4b5563; width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 10px; color: #d1d5db; transition: 0.3s; }
+        .btn-skip:hover { background-color: #6b7280; color: white; }
+        .winner-text { font-size: 2.5rem; color: #4caf50; margin: 20px 0; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+        .toast-msg {
+            visibility: hidden; min-width: 250px; background-color: #f9a826;
+            color: #121026; text-align: center; border-radius: 10px; padding: 15px;
+            position: fixed; z-index: 1000; top: 20px; left: 50%;
+            transform: translateX(-50%); font-size: 1.1rem; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.5s, top 0.5s;
+        }
+        .toast-msg.show { visibility: visible; opacity: 1; top: 40px; }
+        footer { margin-top: 30px; text-align: center; color: #aaa; width: 100%; }
+        footer p { margin: 10px 0; line-height: 1.6; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #121026; }
+        ::-webkit-scrollbar-thumb { background: #2a2752; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="toast" class="toast-msg"></div>
+    <div class="container">
+        <div id="setup-screen" class="active">
+            <h1>🎮 تحديات عمارة 17</h1>
+            <button class="btn btn-full" style="background-color: #3b82f6; color: white; margin-bottom: 20px;" onclick="window.location.href='https://omarsalam22142214-ops.github.io/ASKME17online/'">🌐 الدخول لمود الأونلاين</button>
+            <p>سجل أسامي اللعيبة وظبط إعدادات الماتش!</p>
+            <div class="input-group">
+                <input type="text" id="player-input" placeholder="اكتب اسم اللاعب...">
+                <button class="btn" onclick="addPlayer()">إضافة</button>
+            </div>
+            <ul class="players-list" id="players-ul"></ul>
+            <div class="input-group" style="margin-top: 20px;">
+                <label style="font-weight: bold; min-width: 90px;">العب لحد:</label>
+                <select id="target-score">
+                    <option value="10">10 نقط</option>
+                    <option value="20">20 نقطة</option>
+                    <option value="30">30 نقطة</option>
+                    <option value="50">50 نقطة</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label style="font-weight: bold; min-width: 90px;">لغة البداية:</label>
+                <select id="setup-lang">
+                    <option value="ar">أسئلة عربي</option>
+                    <option value="en">أسئلة إنجليزي</option>
+                </select>
+            </div>
+            <button class="btn btn-full" onclick="goToCategories()">التالي: اختيار الأقسام ➡️</button>
+        </div>
+        
+        <div id="category-screen">
+            <h2 style="margin-bottom: 5px;">Select Categories</h2>
+            <p id="cat-desc" style="color: #aaa; font-size: 0.9rem; margin-top: 0;">الأقسام دي موحدة للعربي والإنجليزي</p>
+            <div class="categories-grid" id="categories-container"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" style="background-color: #555; flex: 1;" onclick="goBackToSetup()">⬅️ رجوع</button>
+                <button class="btn" id="start-btn" style="background-color: #4caf50; flex: 2;" onclick="startSelectedCategories()">تحميل وبدء اللعب 🚀</button>
+            </div>
+        </div>
+        
+        <div id="game-screen">
+            <h3 id="current-category-title" style="color: #aaa; margin-top: 0;">جاري اللعب...</h3>
+            <div class="scoreboard" id="scoreboard"></div>
+            <div class="top-bar">
+                <div class="turn-box" id="turn-display">🎤 الدور على: ...</div>
+                <select id="game-difficulty" class="lang-switch" onchange="skipQuestion()">
+                    <option value="easy">سهل 🟢</option>
+                    <option value="medium">متوسط 🟡</option>
+                    <option value="hard">صعب 🔴</option>
+                </select>
+                <select id="in-game-lang" class="lang-switch" onchange="toggleInGameLang()">
+                    <option value="ar">عربي 🇪🇬</option>
+                    <option value="en">إنجليزي 🇬🇧</option>
+                </select>
+            </div>
+            <div class="question-text" id="question-text">Loading question...</div>
+            <div class="answer-box">
+                <span id="answer-text">...</span>
+            </div>
+            <div class="judge-controls">
+                <button class="btn btn-wrong" onclick="judgeAnswer(false)">غلط -1 ❌</button>
+                <button class="btn btn-correct" onclick="judgeAnswer(true)">صح +1 ✅</button>
+            </div>
+            <button class="btn btn-translate" id="translate-btn" onclick="translateCurrent()">ترجم للعربي 🌐</button>
+            
+            <select id="voice-select" style="width: 100%; margin-bottom: 10px; padding: 12px; border-radius: 10px; border: none; font-size: 1rem; background-color: #2a2752; color: white; outline: none;"></select>
+            
+            <button class="btn btn-full" id="speak-btn" onclick="readQuestion()" style="background-color: #9c27b0; margin-bottom: 10px; color: white;">اسمع السؤال 🔊</button>
+            <button class="btn btn-skip" onclick="skipQuestion()">تخطي السؤال ⏭️</button>
+        </div>
+        
+        <div id="winner-screen">
+            <h1>🏆 الفايز بالدستة 🏆</h1>
+            <div class="winner-text" id="winner-name">اسم الفايز</div>
+            <button class="btn btn-full" onclick="location.reload()">العب من تاني 🔄</button>
+        </div>
+        
+        <button onclick="window.open('https://omarsalam22142214-ops.github.io/-spyimposter/')" class="btn" style="width: 100%; margin-top: 15px; background-color: #3b82f6;"> الجاسوس ★</button>
+        <button onclick="window.open('https://omarsalam22142214-ops.github.io/codenames/')" class="btn" style="width: 100%; margin-top: 15px; background-color: #3b82f6;"> codename ★</button>
+        <button onclick="window.open('https://omarsalam22142214-ops.github.io/hintat/')" class="btn" style="width: 100%; margin-top: 15px; background-color: #3b82f6;"> Hintat ★</button>
+        <button onclick="window.open('https://omarsalam22142214-ops.github.io/topics17/')" class="btn" style="width: 100%; margin-top: 15px; background-color: #3b82f6;"> مواضيع عمارتنا </button>
+        <button onclick="window.open('https://omarsalam22142214-ops.github.io/wisdom-1/')" class="btn" style="width: 100%; margin-top: 15px; background-color: #3b82f6;"> حكم  </button>
+    </div>
+    
+    <footer style="background: rgba(13, 17, 30, 0.45); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-top: 1px solid rgba(255, 255, 255, 0.15); padding: 30px 20px; text-align: center; color: #fff; margin-top: 40px; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);">
+        <p style="font-size: 22px; font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.4); margin-bottom: 10px; letter-spacing: 1px;">© 2027 _ 2026 ENG OMAR TV. All Rights Reserved.</p>
+        <p style="color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.6); font-size: 18px; font-weight: bold; margin-bottom: 25px;">اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى سَيِّدِنَا مُحَمَّدٍ ﷺ</p>
+    </footer>
+
+    <script>
+        const unifiedCategories = {
+            "معلومات عامة": { 
+                icon: "🧠", apiId: 9, 
+                localAr: [
+                    { q: "ما هو أطول نهر في العالم؟", a: "نهر النيل" }, 
+                    { q: "ما هو الكوكب الملقب بالكوكب الأحمر؟", a: "المريخ" }, 
+                    { q: "في أي محافظة يقع السد العالي؟", a: "أسوان" }, 
+                    { q: "من هو صاحب نوبل في الأدب من مصر؟", a: "نجيب محفوظ" }, 
+                    { q: "ما هي أكبر مدينة في أفريقيا والشرق الأوسط؟", a: "القاهرة" }, 
+                    { q: "كم عدد محافظات مصر؟", a: "27 محافظة" },
+                    { q: "أكبر بحيرة صناعية في العالم موجودة في مصر، اسمها إيه؟", a: "بحيرة ناصر" },
+                    { q: "عاصمة مصر في عصر الدولة الحديثة الفراعونية كانت إيه؟", a: "طيبة (الأقصر حالياً)" },
+                    { q: "مين العالم المصري اللي أخد جايزة نوبل في الكيمياء؟", a: "أحمد زويل" },
+                    { q: "إيه هي المدينة المصرية اللي بتلقب بمدينة السحر والجمال؟", a: "شرم الشيخ" },
+                    { q: "حيوان بيسموه سفينة الصحراء، إيه هو؟", a: "الجمل" },
+                    { q: "أكلة مصرية شعبية مكونة من مكرونة ورز وعدس وصلصة؟", a: "الكشري" },
+                    { q: "أعلى قمة جبلية في مصر اسمها إيه؟", a: "جبل سانت كاترين" },
+                    { q: "مين الملك اللي بنى الهرم الأكبر؟", a: "الملك خوفو" }
+                ] 
+            },
+            "أفلام وسينما": { 
+                icon: "🎬", apiId: 11, 
+                localAr: [
+                    { q: "فيلم البطل فيه اسمه 'صلاح' وقال جملة 'الدين المعاملة'؟", a: "الإرهاب والكباب" }, 
+                    { q: "من هو الممثل الملقب بـ 'الزعيم'؟", a: "عادل إمام" }, 
+                    { q: "فيلم 'الناظر' بطل شخصية اللمبي فيه هو الممثل؟", a: "محمد سعد" }, 
+                    { q: "من هو بطل فيلم 'همام في أمستردام'؟", a: "محمد هنيدي" }, 
+                    { q: "صاحب شخصية 'رفاعي الدسوقي' هو الممثل؟", a: "محمد رمضان" },
+                    { q: "فيلم لأحمد حلمي لعب فيه دور 3 إخوات توأم؟", a: "كده رضا" },
+                    { q: "إفيه 'يا ديني على الحلاوة' اتقال في فيلم إيه؟", a: "أبو علي (كريم عبد العزيز)" },
+                    { q: "مين الممثل اللي عمل شخصية 'حزلقوم'؟", a: "أحمد مكي" },
+                    { q: "من هو النجم الملقب بـ 'الساحر' في السينما المصرية؟", a: "محمود عبد العزيز" },
+                    { q: "فيلم مصري كوميدي بطولته 'عاطف' و'محيي'؟", a: "فول الصين العظيم" }
+                ] 
+            },
+            "أغاني وموسيقى": { 
+                icon: "🎵", apiId: 12, 
+                localAr: [
+                    { q: "مطرب ملقب بـ 'الهضبة'؟", a: "عمرو دياب" }, 
+                    { q: "من هي 'كوكب الشرق'؟", a: "أم كلثوم" },
+                    { q: "مطرب مصري ملقب بـ 'الكينج'؟", a: "محمد منير" },
+                    { q: "صاحب أغنية 'بنت الجيران' اللي كسرت الدنيا في المهرجانات؟", a: "حسن شاكوش وعمر كمال" },
+                    { q: "مطرب مصري قديم ملقب بـ 'العندليب الأسمر'؟", a: "عبد الحليم حافظ" },
+                    { q: "مطرب شاب ملقب بـ 'نجم الجيل'؟", a: "تامر حسني" },
+                    { q: "أغنية 'يا بتاع النعناع يا منعنع' غناها مين؟", a: "مصطفى حجاج" }
+                ] 
+            },
+            "تليفزيون ومسلسلات": { 
+                icon: "📺", apiId: 14, 
+                localAr: [
+                    { q: "مسلسل بطولته 'عبد الغفور البرعي'؟", a: "لن أعيش في جلباب أبي" }, 
+                    { q: "اسم المستشفى في مسلسل 'بالطو'؟", a: "طرشوخ الليف" },
+                    { q: "مين الممثل اللي عمل شخصية 'مختار أبو المجد' في إمبراطورية ميم (المسلسل)؟", a: "خالد النبوي" },
+                    { q: "مسلسل رمضاني شهير جداً ليحيى الفخراني كان طالع فيه أب لكتير من الولاد؟", a: "يتربى في عزو" },
+                    { q: "شخصية 'فضة المعداوي' ظهرت في مسلسل إيه؟", a: "الراية البيضا" },
+                    { q: "مسلسل صعيدي شهير بطولة أحمد عبد العزيز (البدري بدار)؟", a: "ذئاب الجبل" },
+                    { q: "مسلسل كوميدي لأحمد مكي أجزاؤه عدت الـ 8 أجزاء؟", a: "الكبير أوي" }
+                ] 
+            },
+            "رياضة": { 
+                icon: "⚽", apiId: 21, 
+                localAr: [
+                    { q: "مين الهداف التاريخي لمنتخب مصر؟", a: "حسام حسن" }, 
+                    { q: "أكثر نادي مصري فاز ببطولة أفريقيا؟", a: "النادي الأهلي" },
+                    { q: "النادي الأهلي اتأسس سنة كام؟", a: "1907" },
+                    { q: "نادي الزمالك اتأسس سنة كام؟", a: "1911" },
+                    { q: "مين اللاعب المصري اللي كسب دوري أبطال أوروبا مع ليفربول؟", a: "محمد صلاح" },
+                    { q: "مين المعلق الرياضي صاحب إفيه 'يا نهار أبيض' و 'بيلو بيلو'؟", a: "مدحت شلبي" },
+                    { q: "منتخب مصر أخد كأس الأمم الأفريقية كام مرة؟", a: "7 مرات" },
+                    { q: "أكثر لاعب مصري شارك في مباريات دولية مع المنتخب؟", a: "أحمد حسن" },
+                    { q: "نادي مصري بيلقب بـ 'الدراويش'؟", a: "النادي الإسماعيلي" },
+                    { q: "نادي مصري بيلقب بـ 'سيد البلد'؟", a: "نادي الاتحاد السكندري" }
+                ] 
+            },
+            "ديني إسلامي": { 
+                icon: "🕋", apiId: null, 
+                localAr: [
+                    { q: "ما هي السورة التي تُسمى بقلب القرآن؟", a: "سورة يس" }, 
+                    { q: "ما هي أول غزوة في الإسلام؟", a: "غزوة الأبواء (أو ودّان)" },
+                    { q: "كم عدد سور القرآن الكريم؟", a: "114 سورة" },
+                    { q: "من هو أول الخلفاء الراشدين؟", a: "أبو بكر الصديق رضي الله عنه" },
+                    { q: "ما هي السورة التي تُسمى بعروس القرآن؟", a: "سورة الرحمن" },
+                    { q: "من هو الصحابي الملقب بسيف الله المسلول؟", a: "خالد بن الوليد" },
+                    { q: "ما هو الشهر الذي أنزل فيه القرآن؟", a: "شهر رمضان" },
+                    { q: "كم عدد أركان الإسلام؟", a: "5 أركان" }
+                ], 
+                localEn: [
+                    { q: "What is the holy month of fasting in Islam?", a: "Ramadan" }, 
+                    { q: "How many pillars of Islam are there?", a: "Five (5)" },
+                    { q: "Who is the last prophet in Islam?", a: "Prophet Muhammad (PBUH)" }
+                ] 
+            },
+            "فوازير وألغاز": { 
+                icon: "🤔", apiId: null, 
+                localAr: [
+                    { q: "شيء كلما زاد نقص، فما هو؟", a: "العمر" }, 
+                    { q: "ما هو الشيء الذي لا يمشي إلا بالضرب؟", a: "المسمار" },
+                    { q: "إيه هو الباب اللي مستحيل يتفتح؟", a: "الباب المفتوح" },
+                    { q: "ابن أمك وابن أبوك، ومش أختك ومش أخوك.. يبقى مين؟", a: "أنت" },
+                    { q: "بيمشي من غير رجلين ويعيط من غير عينين.. إيه هو؟", a: "السحاب" },
+                    { q: "حاجة لونها أسود بس مش بتنور غير لما تولع فيها؟", a: "الفحم" },
+                    { q: "عنده أسنان كتير بس مابيعضش.. إيه هو؟", a: "المشط" }
+                ], 
+                localEn: [
+                    { q: "I have keys but open no doors. What am I?", a: "A piano" }, 
+                    { q: "What has one eye, but can't see?", a: "A needle" },
+                    { q: "What gets wetter as it dries?", a: "A towel" }
+                ] 
+            }
+        };
+
+        let arabicQuestions = []; 
+        let englishQuestions = [];
+        let currentLang = 'ar';
+        let players = [];
+        let targetScore = 10;
+        let currentPlayerIndex = 0;
+        let selectedCategories = []; 
+        let currentDisplayedQuestion = null;
+        let askedQuestions = new Set(JSON.parse(localStorage.getItem('amara17_askedQuestions')) || []); 
+        
+        let availableVoices = [];
+
+        function populateVoiceList() {
+            if (typeof speechSynthesis === 'undefined') return;
+            availableVoices = speechSynthesis.getVoices();
+            const voiceSelect = document.getElementById("voice-select");
+            if (availableVoices.length === 0) return;
+            voiceSelect.innerHTML = '';
+            
+            let arabicVoices = availableVoices.filter(v => v.lang.startsWith('ar') || v.name.toLowerCase().includes('arabic') || v.name.toLowerCase().includes('egypt'));
+            
+            arabicVoices.sort((a, b) => {
+                const aIsGood = a.name.includes('Google') || a.name.includes('Salma') || a.name.includes('Laila');
+                const bIsGood = b.name.includes('Google') || b.name.includes('Salma') || b.name.includes('Laila');
+                return bIsGood - aIsGood; 
+            });
+
+            if (arabicVoices.length === 0) {
+                voiceSelect.innerHTML = '<option value="">مفيش أصوات عربي متاحة على جهازك</option>';
+                return;
+            }
+
+            arabicVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = voice.name;
+                if (voice.name.includes('Salma') || voice.name.includes('Laila') || voice.name.includes('Google') || (voice.name.toLowerCase().includes('female') && voice.lang === 'ar-EG')) {
+                    option.textContent = `👩 صوت ممتاز (بنت) - ${voice.name}`;
+                } else if (voice.name.includes('Shakir') || voice.name.includes('Hamed') || (voice.name.toLowerCase().includes('male') && voice.lang === 'ar-EG')) {
+                    option.textContent = `👨 صوت (ولد) - ${voice.name}`;
+                } else {
+                    option.textContent = `🎤 ${voice.name} (${voice.lang})`;
+                }
+                if (index === 0) option.selected = true;
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        populateVoiceList();
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
+        function fixSlangForSpeech(text) {
+            let fixed = text;
+            fixed = fixed.replace(/إيه/g, "إييه");
+            fixed = fixed.replace(/مين/g, "ميين");
+            fixed = fixed.replace(/إزاي/g, "إزّاي");
+            fixed = fixed.replace(/عشان/g, "علشان");
+            fixed = fixed.replace(/مابيعضش/g, "ما بيعضّش");
+            fixed = fixed.replace(/مابيمشيش/g, "ما بيمشيش");
+            return fixed;
+        }
+
+        // دالة آمنة لتحويل ملف CSV اللي جاي من جوجل
+        function CSVToArray(strData, strDelimiter) {
+            strDelimiter = (strDelimiter || ",");
+            var objPattern = new RegExp(("(\\" + strDelimiter + "|\\r?\\n|\\r|^)" + "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" + "([^\"\\" + strDelimiter + "\\r\\n]*))"), "gi");
+            var arrData = [[]];
+            var arrMatches = null;
+            while (arrMatches = objPattern.exec(strData)) {
+                var strMatchedDelimiter = arrMatches[1];
+                if (strMatchedDelimiter.length && strMatchedDelimiter !== strDelimiter) { arrData.push([]); }
+                var strMatchedValue;
+                if (arrMatches[2]) { strMatchedValue = arrMatches[2].replace(new RegExp("\"\"", "g"), "\""); } else { strMatchedValue = arrMatches[3]; }
+                arrData[arrData.length - 1].push(strMatchedValue);
+            }
+            return arrData;
+        }
+
+        function parseGoogleSheetCSV(csvText) {
+            const arr = CSVToArray(csvText);
+            if(arr.length < 2) return [];
+            const headers = arr[0].map(h => h ? h.trim().toLowerCase() : '');
+            const result = [];
+            for(let i = 1; i < arr.length; i++) {
+                const row = arr[i];
+                if(!row || row.length === 0 || !row[0]) continue;
+                const obj = {};
+                headers.forEach((h, index) => {
+                    obj[h] = row[index] ? row[index].trim() : '';
+                });
+                result.push({
+                    category: obj.category,
+                    q: obj.question,
+                    a: obj.answer,
+                    difficulty: obj.difficulty || 'easy'
+                });
+            }
+            return result;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.classList.add("show");
+            setTimeout(() => { toast.classList.remove("show"); }, 3000);
+        }
+
+        function decodeHTML(html) {
+            var txt = document.createElement("textarea");
+            txt.innerHTML = html;
+            return txt.value;
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.container > div').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function addPlayer() {
+            const input = document.getElementById("player-input");
+            const name = input.value.trim();
+            if (name !== "") {
+                players.push({ name: name, score: 0 });
+                updatePlayersList();
+                input.value = "";
+            }
+        }
+
+        function updatePlayersList() {
+            const ul = document.getElementById("players-ul");
+            ul.innerHTML = "";
+            players.forEach(player => {
+                const li = document.createElement("li");
+                li.className = "player-badge";
+                li.innerText = player.name;
+                ul.appendChild(li);
+            });
+        }
+
+        function goToCategories() {
+            if (players.length < 2) {
+                alert("لازم تسجل على الأقل 2 لعيبة!");
+                return;
+            }
+            targetScore = parseInt(document.getElementById("target-score").value);
+            currentLang = document.getElementById("setup-lang").value;
+            renderCategories();
+            switchScreen('category-screen');
+        }
+
+        function goBackToSetup() { switchScreen('setup-screen'); }
+
+        function renderCategories() {
+            const container = document.getElementById("categories-container");
+            container.innerHTML = "";
+            for (const category in unifiedCategories) {
+                const catData = unifiedCategories[category];
+                const card = document.createElement("div");
+                card.className = "cat-card";
+                if (selectedCategories.includes(category)) card.classList.add("selected");
+                card.innerHTML = `<div class="cat-icon">${catData.icon}</div><div class="cat-title">${category}</div>`;
+                card.onclick = () => toggleCategory(category, card);
+                container.appendChild(card);
+            }
+        }
+
+        function toggleCategory(category, cardElement) {
+            const index = selectedCategories.indexOf(category);
+            if (index > -1) {
+                selectedCategories.splice(index, 1);
+                cardElement.classList.remove('selected');
+            } else {
+                selectedCategories.push(category);
+                cardElement.classList.add('selected');
+            }
+        }
+
+        async function startSelectedCategories() {
+            if (selectedCategories.length === 0) {
+                alert("اختار قسم واحد على الأقل يا بطل!");
+                return;
+            }
+            const startBtn = document.getElementById("start-btn");
+            startBtn.innerText = "جاري سحب الأسئلة من جوجل شيت... ⏳";
+            startBtn.disabled = true;
+            
+            arabicQuestions = [];
+            englishQuestions = [];
+            
+            // إضافة الأسئلة المحلية
+            selectedCategories.forEach(cat => {
+                if(unifiedCategories[cat].localAr) {
+                    let arr = unifiedCategories[cat].localAr.map(q => ({ ...q, difficulty: 'easy' }));
+                    arabicQuestions = arabicQuestions.concat(arr);
+                }
+                if(unifiedCategories[cat].localEn) {
+                    let arr = unifiedCategories[cat].localEn.map(q => ({ ...q, difficulty: 'easy' }));
+                    englishQuestions = englishQuestions.concat(arr);
+                }
+            });
+
+            // سحب البيانات من Google Sheets بطريقة آمنة (gviz endpoint عشان نتجنب الـ CORS)
+            const sheetId = '1vfBCNoVy0ON4Cy3fOl33g3qHCxYMOdMRysACYP-PISU';
+            const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+            try {
+                const response = await fetch(sheetUrl);
+                const csvText = await response.text();
+                const sheetQuestions = parseGoogleSheetCSV(csvText);
+                
+                const filteredQuestions = sheetQuestions.filter(item => selectedCategories.includes(item.category));
+                arabicQuestions = arabicQuestions.concat(filteredQuestions);
+                if(filteredQuestions.length > 0) {
+                    showToast(`تم سحب ${filteredQuestions.length} سؤال من جوجل شيت بنجاح! 🤩`);
+                }
+            } catch (e) { 
+                console.error("مشكلة في سحب أسئلة جوجل شيت:", e); 
+                showToast("في مشكلة في سحب الشيت، هنكمل بالأسئلة الأساسية 📶"); 
+            }
+
+            // سحب الأسئلة من الـ API
+            for (const cat of selectedCategories) {
+                const apiId = unifiedCategories[cat].apiId;
+                if (apiId !== null) {
+                    try {
+                        const response = await fetch(`https://opentdb.com/api.php?amount=15&category=${apiId}&type=multiple`);
+                        const data = await response.json();
+                        const formattedQuestions = data.results.map(item => ({
+                            q: decodeHTML(item.question),
+                            a: decodeHTML(item.correct_answer),
+                            isFromApi: true,
+                            difficulty: item.difficulty 
+                        }));
+                        englishQuestions = englishQuestions.concat(formattedQuestions);
+                        arabicQuestions = arabicQuestions.concat(formattedQuestions);
+                    } catch (e) { console.error("مشكلة في سحب الأسئلة الأجنبية:", e); }
+                }
+            }
+
+            arabicQuestions = shuffleArray(arabicQuestions);
+            englishQuestions = shuffleArray(englishQuestions);
+            
+            document.getElementById("in-game-lang").value = currentLang;
+            startBtn.innerText = "تحميل وبدء اللعب 🚀";
+            startBtn.disabled = false;
+            switchScreen('game-screen');
+            updateScoreboard();
+            loadNextQuestion();
+        }
+
+        function toggleInGameLang() {
+            currentLang = document.getElementById("in-game-lang").value;
+            loadNextQuestion(); 
+        }
+
+        function updateScoreboard() {
+            const board = document.getElementById("scoreboard");
+            board.innerHTML = "";
+            players.forEach((player, index) => {
+                const div = document.createElement("div");
+                div.className = index === currentPlayerIndex ? "score-card active-player-card" : "score-card";
+                
+                div.innerHTML = `
+                    <div style="margin-bottom: 5px;">${player.name}</div>
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <button onclick="adjustScore(${index}, -1)" style="background-color: #f44336; border: none; color: white; border-radius: 4px; cursor: pointer; padding: 2px 8px; font-weight: bold; font-size: 1rem;">-</button>
+                        <span style="color:#f9a826; font-size:1.2rem; font-weight: bold; min-width: 20px;">${player.score}</span>
+                        <button onclick="adjustScore(${index}, 1)" style="background-color: #4caf50; border: none; color: white; border-radius: 4px; cursor: pointer; padding: 2px 8px; font-weight: bold; font-size: 1rem;">+</button>
+                    </div>
+                `;
+                board.appendChild(div);
+            });
+        }
+
+        function adjustScore(index, amount) {
+            players[index].score += amount;
+            if (players[index].score >= targetScore) {
+                showWinner(players[index].name);
+            } else {
+                updateScoreboard();
+            }
+        }
+
+        async function loadNextQuestion() {
+            window.speechSynthesis.cancel(); 
+            let activePool = currentLang === 'ar' ? arabicQuestions : englishQuestions;
+            let selectedDiff = document.getElementById("game-difficulty").value;
+            let currentQ = null;
+
+            let questionIndex = activePool.findIndex(q => q.difficulty === selectedDiff && !askedQuestions.has(q.q));
+
+            if (questionIndex !== -1) {
+                currentQ = activePool.splice(questionIndex, 1)[0];
+                askedQuestions.add(currentQ.q);
+                localStorage.setItem('amara17_askedQuestions', JSON.stringify([...askedQuestions]));
+            } else {
+                showToast(`أسئلة المستوى (${selectedDiff === 'easy' ? 'السهل' : selectedDiff === 'medium' ? 'المتوسط' : 'الصعب'}) خلصت! غير المستوى. 🔄`);
+                document.getElementById("question-text").innerText = `خلصنا كل الأسئلة الـ ${selectedDiff === 'easy' ? 'السهل' : selectedDiff === 'medium' ? 'المتوسط' : 'الصعب'}! اختار مستوى تاني من فوق أو تخطى.`;
+                document.getElementById("answer-text").innerHTML = "...";
+                return; 
+            }
+
+            currentDisplayedQuestion = currentQ;
+            updateScoreboard();
+            document.getElementById("turn-display").innerText = `🎤 الدور على: ${players[currentPlayerIndex].name}`;
+            
+            const qEl = document.getElementById("question-text");
+            const aEl = document.getElementById("answer-text");
+            const transBtn = document.getElementById("translate-btn");
+            
+            if (currentLang === 'ar') {
+                qEl.style.direction = "rtl"; qEl.style.textAlign = "right";
+                aEl.parentElement.style.direction = "rtl"; aEl.parentElement.style.textAlign = "right";
+                aEl.parentElement.style.borderRight = "5px solid #4caf50"; aEl.parentElement.style.borderLeft = "none";
+                transBtn.style.display = "none"; 
+                
+                if (currentQ.isFromApi) {
+                    qEl.innerText = "جاري سحب سؤال عشوائي من النت وترجمته... ⏳";
+                    aEl.innerHTML = `الإجابة: <span style="color:white;">...</span>`;
+                    try {
+                        const qRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(currentQ.q)}&langpair=en|ar`);
+                        const qData = await qRes.json();
+                        const translatedQ = qData.responseData.translatedText;
+                        
+                        const aRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(currentQ.a)}&langpair=en|ar`);
+                        const aData = await aRes.json();
+                        const translatedA = aData.responseData.translatedText;
+                        
+                        qEl.innerText = translatedQ;
+                        aEl.innerHTML = `الإجابة: <span style="color:white;">${translatedA}</span>`;
+                    } catch (e) {
+                        qEl.innerText = "حصلت مشكلة في الترجمة، هنتخطى السؤال ده تلقائي 😅";
+                        setTimeout(skipQuestion, 2000);
+                    }
+                } else {
+                    qEl.innerText = currentQ.q;
+                    aEl.innerHTML = `الإجابة: <span style="color:white;">${currentQ.a}</span>`;
+                }
+            } else {
+                qEl.style.direction = "ltr"; qEl.style.textAlign = "left";
+                aEl.parentElement.style.direction = "ltr"; aEl.parentElement.style.textAlign = "left";
+                aEl.parentElement.style.borderLeft = "5px solid #4caf50"; aEl.parentElement.style.borderRight = "none";
+                aEl.innerHTML = `Answer: <span style="color:white;">${currentQ.a}</span>`;
+                transBtn.style.display = "block"; 
+                qEl.innerText = currentQ.q;
+                
+                translateCurrent();
+            }
+        }
+
+        async function translateCurrent() {
+            if (!currentDisplayedQuestion || currentLang === 'ar') return;
+            const transBtn = document.getElementById("translate-btn");
+            transBtn.innerText = "جاري الترجمة... ⏳";
+            transBtn.disabled = true;
+            try {
+                const qRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(currentDisplayedQuestion.q)}&langpair=en|ar`);
+                const qData = await qRes.json();
+                const translatedQ = qData.responseData.translatedText;
+                
+                const aRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(currentDisplayedQuestion.a)}&langpair=en|ar`);
+                const aData = await aRes.json();
+                const translatedA = aData.responseData.translatedText;
+                
+                const qEl = document.getElementById("question-text");
+                const aEl = document.getElementById("answer-text");
+                
+                qEl.innerText = translatedQ;
+                qEl.style.direction = "rtl"; qEl.style.textAlign = "right";
+                aEl.parentElement.style.direction = "rtl"; aEl.parentElement.style.textAlign = "right";
+                aEl.parentElement.style.borderRight = "5px solid #4caf50"; aEl.parentElement.style.borderLeft = "none";
+                aEl.innerHTML = `الإجابة (مترجمة): <span style="color:white;">${translatedA}</span>`;
+                transBtn.style.display = "none"; 
+            } catch (e) { showToast("مشكلة في الترجمة 📶"); }
+            transBtn.innerText = "ترجم للعربي 🌐";
+            transBtn.disabled = false;
+        }
+
+        function judgeAnswer(isCorrect) {
+            if (isCorrect) players[currentPlayerIndex].score += 1;
+            else players[currentPlayerIndex].score -= 1;
+            
+            if (players[currentPlayerIndex].score >= targetScore) showWinner(players[currentPlayerIndex].name);
+            else { currentPlayerIndex = (currentPlayerIndex + 1) % players.length; loadNextQuestion(); }
+        }
+
+        function skipQuestion() { loadNextQuestion(); }
+
+        function showWinner(winnerName) { 
+            switchScreen('winner-screen'); 
+            document.getElementById("winner-name").innerText = winnerName; 
+        }
+
+        function readQuestion() {
+            window.speechSynthesis.cancel();
+            const qTextOriginal = document.getElementById("question-text").innerText;
+            
+            if (!qTextOriginal || qTextOriginal.includes("Loading") || qTextOriginal.includes("جاري")) return;
+
+            const qTextFixed = fixSlangForSpeech(qTextOriginal);
+            const utterance = new SpeechSynthesisUtterance(qTextFixed);
+            
+            const selectedVoiceName = document.getElementById("voice-select").value;
+            const selectedVoice = availableVoices.find(v => v.name === selectedVoiceName);
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            } else {
+                const isTranslated = document.getElementById("translate-btn").style.display === "none";
+                if (currentLang === 'ar' || isTranslated) {
+                    utterance.lang = 'ar-EG'; 
+                } else {
+                    utterance.lang = 'en-US'; 
+                }
+            }
+
+            utterance.rate = 0.85;
+            utterance.pitch = 1.1;
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
